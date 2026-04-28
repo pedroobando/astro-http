@@ -1,4 +1,4 @@
-# 05-astro-http
+# astro-http
 
 > Blog con Astro 6.x en modo SSR — Cloudflare Workers, D1 Database, Drizzle ORM, API endpoints y Content Collections.
 >
@@ -168,11 +168,13 @@ npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
 Este proyecto se despliega en **Cloudflare Workers**:
 
 1. Aplicá migraciones en producción:
+
    ```bash
    npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
    ```
 
 2. Compilá la app:
+
    ```bash
    pnpm build
    ```
