@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ params }) => {
     return Response.json({ message: 'clientId is required and must be a number' }, { status: 400 });
   }
 
-  const db = createDb(env.clients);
+  const db = createDb(env);
   const result = await db
     .select()
     .from(clients)
@@ -43,7 +43,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return Response.json({ message: 'No fields provided to update.' }, { status: 400 });
   }
 
-  const db = createDb(env.clients);
+  const db = createDb(env);
   const updated = await db
     .update(clients)
     .set(updateData)
@@ -64,7 +64,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     return Response.json({ message: 'clientId is required and must be a number' }, { status: 400 });
   }
 
-  const db = createDb(env.clients);
+  const db = createDb(env);
   const deleted = await db
     .delete(clients)
     .where(eq(clients.id, Number(clientId)))

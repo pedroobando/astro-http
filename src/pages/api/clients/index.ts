@@ -5,15 +5,13 @@ import { clients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const GET: APIRoute = async () => {
-  const db = createDb(env.clients);
+  const db = createDb(env);
   const allClients = await db.select().from(clients).all();
 
   return Response.json(allClients);
 };
 
 export const POST: APIRoute = async ({ request }) => {
-  const db = createDb(env.clients);
-
   const body = (await request.json()) as { name?: unknown; age?: unknown; isActive?: unknown };
 
   if (!body.name || typeof body.name !== 'string') {
@@ -24,6 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
     return Response.json({ message: 'age is required and must be a positive number' }, { status: 400 });
   }
 
+  const db = createDb(env);
   const result = await db
     .insert(clients)
     .values({
@@ -37,8 +36,6 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const PATCH: APIRoute = async ({ request }) => {
-  const db = createDb(env.clients);
-
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
 
@@ -57,6 +54,7 @@ export const PATCH: APIRoute = async ({ request }) => {
     return Response.json({ message: 'No fields provided to update' }, { status: 400 });
   }
 
+  const db = createDb(env);
   const updated = await db
     .update(clients)
     .set(updateData)
@@ -71,8 +69,6 @@ export const PATCH: APIRoute = async ({ request }) => {
 };
 
 export const DELETE: APIRoute = async ({ request }) => {
-  const db = createDb(env.clients);
-
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
 
@@ -80,6 +76,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     return Response.json({ message: 'id query param is required and must be a number' }, { status: 400 });
   }
 
+  const db = createDb(env);
   const deleted = await db
     .delete(clients)
     .where(eq(clients.id, Number(id)))

@@ -1,10 +1,10 @@
 # astro-http
 
-> Blog con Astro 6.x en modo SSR — Cloudflare Workers, D1 Database, Drizzle ORM, API endpoints y Content Collections.
+> Blog con Astro 6.x en modo SSR — Cloudflare Workers, Turso Database, Drizzle ORM, API endpoints y Content Collections.
 >
 > Parte del curso **"Astro: La Guía Completa"** impartido por [Fernando Herrera](https://fernando-herrera.com/) en [Udemy](https://www.udemy.com/course/astro-guia-completa/?couponCode=KEEPLEARNING).
 
-Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en modo **`server`** utilizando el adapter de **Cloudflare**. Incluye **D1 Database** con **Drizzle ORM** para persistencia tipada, endpoints REST en `src/pages/api/` y manejo de contenido con Content Collections.
+Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en modo **`server`** utilizando el adapter de **Cloudflare**. Incluye **Turso Database** con **Drizzle ORM** para persistencia tipada, endpoints REST en `src/pages/api/` y manejo de contenido con Content Collections.
 
 ## 📋 Requisitos previos
 
@@ -25,19 +25,21 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
    pnpm g-types
    ```
 
-3. **Creá la base de datos local (solo la primera vez):**
+3. **Configurá las variables de entorno:**
+
+   Copiá el archivo de ejemplo:
 
    ```bash
-   npx wrangler d1 create clients
+   cp .env.example .env
    ```
 
-   Copiá el `database_id` que te devuelve y pegalo en `wrangler.jsonc`.
+   Completá `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` con los datos de tu base de datos Turso.
 
 4. **Generá y aplicá las migraciones iniciales:**
 
    ```bash
    pnpm db:generate
-   npx wrangler d1 execute clients --local --file=./src/db/migrations/0000_xxx.sql
+   pnpm db:migrate
    ```
 
 5. **Levantá el servidor de desarrollo:**
@@ -51,8 +53,8 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 ## ¿Qué se practica aquí?
 
 - **SSR con Astro:** Configuración de `output: 'server'` y el adapter `@astrojs/cloudflare`.
-- **D1 Database:** Base de datos SQLite serverless nativa de Cloudflare.
-- **Drizzle ORM:** ORM type-safe para SQLite/D1 con sintaxis SQL-like.
+- **Turso Database:** Base de datos SQLite serverless distribuida por Turso (libSQL).
+- **Drizzle ORM:** ORM type-safe para SQLite/Turso con sintaxis SQL-like.
 - **Migrations:** Generación y aplicación de migraciones con `drizzle-kit`.
 - **API Routes:** Endpoints REST en `src/pages/api/` para servir datos JSON.
 - **Content Collections:** Manejo de posts en Markdown con esquemas tipados vía Zod.
@@ -70,7 +72,7 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 │   ├── content/
 │   │   └── blog/               # Posts en Markdown / MDX
 │   ├── db/                     # Drizzle ORM schema y migraciones
-│   │   ├── index.ts            # Cliente de Drizzle para D1
+│   │   ├── index.ts            # Factory de Drizzle para Turso
 │   │   ├── schema.ts           # Definición de tablas tipadas
 │   │   └── migrations/         # Archivos SQL de migraciones
 │   ├── layouts/                # Layouts de página
@@ -92,7 +94,7 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 ├── drizzle.config.ts           # Configuración de Drizzle Kit
 ├── package.json
 ├── tsconfig.json
-├── wrangler.jsonc              # Configuración de Cloudflare Workers + D1
+├── wrangler.jsonc              # Configuración de Cloudflare Workers + Turso
 └── README.md
 ```
 
@@ -114,8 +116,8 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 
 | Ruta                     | Método | Descripción                                                    |
 | :----------------------- | :----- | :------------------------------------------------------------- |
-| `/api/clients`           | GET    | Lista todos los clientes desde D1                              |
-| `/api/clients`           | POST   | Crea un nuevo cliente en D1                                    |
+| `/api/clients`           | GET    | Lista todos los clientes desde Turso                           |
+| `/api/clients`           | POST   | Crea un nuevo cliente en Turso                                 |
 | `/api/clients/<id>`      | GET    | Obtiene un cliente específico por ID                           |
 | `/api/clients/<id>`      | PATCH  | Actualiza un cliente existente                                 |
 | `/api/clients/<id>`      | DELETE | Elimina un cliente                                             |
@@ -135,21 +137,57 @@ output: 'server',
 adapter: cloudflare(),
 ```
 
-### D1 Database
+### Turso Database
 
-La base de datos está configurada en `wrangler.jsonc`:
+Las credenciales se acceden mediante el módulo `cloudflare:workers`, que el adapter emula automáticamente en desarrollo cargando las variables del archivo `.env`:
 
-```json
-"d1_databases": [
-  {
-    "binding": "clients",
-    "database_name": "clients",
-    "database_id": "cea973db-382f-454e-a99e-935fc090e25b"
-  }
-]
+```ts
+import { env } from 'cloudflare:workers';
 ```
 
-> **Nota:** Si estás forkeando este proyecto, reemplazá el `database_id` por el de tu propia base de datos D1.
+En producción, Cloudflare inyecta estos valores como bindings del Worker.
+
+El archivo `wrangler.jsonc` tiene placeholders para desarrollo:
+
+```json
+"vars": {
+  "TURSO_DATABASE_URL": "libsql://your-database.turso.io",
+  "TURSO_AUTH_TOKEN": "your-auth-token"
+}
+```
+
+> **Importante:** Para producción usá **Cloudflare Secrets** en lugar de `vars`:
+> ```bash
+> wrangler secret put TURSO_DATABASE_URL
+> wrangler secret put TURSO_AUTH_TOKEN
+> ```
+
+### Patrón Factory para la base de datos
+
+El cliente de Drizzle se crea mediante una **factory function** (`createDb`) que recibe las credenciales como parámetro:
+
+```ts
+// src/db/index.ts
+export function createDb(env: TursoEnv) {
+  const client = createClient({
+    url: env.TURSO_DATABASE_URL,
+    authToken: env.TURSO_AUTH_TOKEN,
+  });
+  return drizzle({ client });
+}
+```
+
+En los endpoints se importa `env` directamente desde el módulo de Cloudflare. El adapter lo emula en desarrollo y carga automáticamente las variables del `.env`:
+
+```ts
+import { env } from 'cloudflare:workers';
+import { createDb } from '@/db';
+
+export const GET: APIRoute = async () => {
+  const db = createDb(env);
+  // ...
+};
+```
 
 ### Drizzle ORM
 
@@ -173,24 +211,20 @@ export const clients = sqliteTable('clients', {
 pnpm db:generate
 ```
 
-Esto crea un archivo SQL en `src/db/migrations/`.
+Esto crea un archivo SQL en `drizzle/`.
 
-### 2. Aplicar migraciones a D1 local
+### 2. Aplicar migraciones a Turso
 
 ```bash
-npx wrangler d1 execute clients --local --file=./src/db/migrations/0000_xxx.sql
+pnpm db:migrate
 ```
 
 ### 3. Seedear datos de prueba
 
-```bash
-npx wrangler d1 execute clients --local --command="INSERT INTO clients (name, age, is_active) VALUES ('Kasim', 32, 1)"
-```
-
-### 4. Para producción
+Usá el CLI de Turso o Drizzle Studio:
 
 ```bash
-npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
+pnpm db:studio
 ```
 
 ## 📦 Dependencias principales
@@ -200,7 +234,7 @@ npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
 - `@astrojs/mdx` — Soporte para MDX
 - `@astrojs/rss` — Generación de feeds RSS
 - `@astrojs/sitemap` — Generación de sitemap
-- `drizzle-orm` — ORM type-safe para SQLite/D1
+- `drizzle-orm` — ORM type-safe para SQLite/Turso
 - `drizzle-kit` — CLI para generar y aplicar migraciones
 - `sharp` — Optimización de imágenes
 - `wrangler` — CLI de Cloudflare para deploy y tipos
@@ -211,19 +245,26 @@ npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
 
 Este proyecto se despliega en **Cloudflare Workers**:
 
-1. Aplicá migraciones en producción:
+1. Asegurate de tener las credenciales configuradas como Secrets:
 
    ```bash
-   npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
+   wrangler secret put TURSO_DATABASE_URL
+   wrangler secret put TURSO_AUTH_TOKEN
    ```
 
-2. Compilá la app:
+2. Aplicá migraciones en producción:
+
+   ```bash
+   pnpm db:migrate
+   ```
+
+3. Compilá la app:
 
    ```bash
    pnpm build
    ```
 
-3. Publicá con Wrangler:
+4. Publicá con Wrangler:
    ```bash
    npx wrangler deploy
    ```
