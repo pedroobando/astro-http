@@ -1,0 +1,22 @@
+{
+	"compatibility_date": "2026-04-28",
+	"compatibility_flags": [
+		"global_fetch_strictly_public"
+	],
+	"name": "05-astro-http",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "clients",
+			"database_name": "clients",
+			"database_id": "cea973db-382f-454e-a99e-935fc090e25b"
+		}
+	]
+}

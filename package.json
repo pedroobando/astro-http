@@ -1,0 +1,37 @@
+{
+  "name": "05-astro-http",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "g-types": "wrangler types",
+    "generate-types": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "13.2.1",
+    "@astrojs/mdx": "5.0.4",
+    "@astrojs/rss": "4.0.18",
+    "@astrojs/sitemap": "3.7.2",
+    "astro": "6.1.9",
+    "drizzle-orm": "0.45.2",
+    "sharp": "0.34.5",
+    "wrangler": "4.86.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260426.1",
+    "drizzle-kit": "0.31.10",
+    "prettier-plugin-astro": "0.14.1"
+  },
+  "overrides": {
+    "vite": "7.3.2"
+  }
+}
