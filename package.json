@@ -21,7 +21,9 @@
     "@astrojs/mdx": "5.0.4",
     "@astrojs/rss": "4.0.18",
     "@astrojs/sitemap": "3.7.2",
+    "@libsql/client": "^0.17.3",
     "astro": "6.1.9",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "0.45.2",
     "sharp": "0.34.5",
     "wrangler": "4.86.0"
@@ -29,7 +31,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260426.1",
     "drizzle-kit": "0.31.10",
-    "prettier-plugin-astro": "0.14.1"
+    "prettier-plugin-astro": "0.14.1",
+    "tsx": "^4.21.0"
   },
   "overrides": {
     "vite": "7.3.2"
