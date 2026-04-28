@@ -6,6 +6,48 @@
 
 Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en modo **`server`** utilizando el adapter de **Cloudflare**. Incluye **D1 Database** con **Drizzle ORM** para persistencia tipada, endpoints REST en `src/pages/api/` y manejo de contenido con Content Collections.
 
+## 📋 Requisitos previos
+
+- [Node.js](https://nodejs.org/) **>= 22.12.0**
+- [pnpm](https://pnpm.io/) (recomendado)
+
+## 🏁 Primeros pasos
+
+1. **Instalá las dependencias:**
+
+   ```bash
+   pnpm install
+   ```
+
+2. **Generá los tipos de TypeScript desde Wrangler:**
+
+   ```bash
+   pnpm g-types
+   ```
+
+3. **Creá la base de datos local (solo la primera vez):**
+
+   ```bash
+   npx wrangler d1 create clients
+   ```
+
+   Copiá el `database_id` que te devuelve y pegalo en `wrangler.jsonc`.
+
+4. **Generá y aplicá las migraciones iniciales:**
+
+   ```bash
+   pnpm db:generate
+   npx wrangler d1 execute clients --local --file=./src/db/migrations/0000_xxx.sql
+   ```
+
+5. **Levantá el servidor de desarrollo:**
+
+   ```bash
+   pnpm dev
+   ```
+
+   Abrí [http://localhost:4321](http://localhost:4321) en tu navegador.
+
 ## ¿Qué se practica aquí?
 
 - **SSR con Astro:** Configuración de `output: 'server'` y el adapter `@astrojs/cloudflare`.
@@ -102,10 +144,12 @@ La base de datos está configurada en `wrangler.jsonc`:
   {
     "binding": "clients",
     "database_name": "clients",
-    "database_id": "<tu-database-id>"
+    "database_id": "cea973db-382f-454e-a99e-935fc090e25b"
   }
 ]
 ```
+
+> **Nota:** Si estás forkeando este proyecto, reemplazá el `database_id` por el de tu propia base de datos D1.
 
 ### Drizzle ORM
 
@@ -183,6 +227,8 @@ Este proyecto se despliega en **Cloudflare Workers**:
    ```bash
    npx wrangler deploy
    ```
+
+> **Nota sobre dominio:** El archivo `wrangler.jsonc` ya tiene configurado el dominio personalizado `astro-http.db9.uk`. Si vas a desplegar tu propia versión, actualizá o eliminá esa configuración de `routes`.
 
 ## 👀 ¿Querés aprender más?
 
