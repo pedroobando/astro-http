@@ -3,6 +3,13 @@
   "compatibility_flags": ["global_fetch_strictly_public"],
   "name": "astro-http",
   "main": "@astrojs/cloudflare/entrypoints/server",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "astro-http.db9.uk",
+      "custom_domain": true,
+    },
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
