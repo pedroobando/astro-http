@@ -1,0 +1,64 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+
+export const prerender = true;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`404 — ${SITE_TITLE}`} description="Page not found" />
+    <style>
+      .error-container {
+        text-align: center;
+        padding: 4em 1em;
+      }
+      .error-code {
+        font-size: 6rem;
+        font-weight: 700;
+        color: rgb(var(--accent));
+        margin: 0;
+        line-height: 1;
+      }
+      .error-message {
+        font-size: 1.5rem;
+        color: rgb(var(--gray-dark));
+        margin: 1em 0;
+      }
+      .error-hint {
+        color: rgb(var(--gray));
+        margin-bottom: 2em;
+      }
+      .home-link {
+        display: inline-block;
+        padding: 0.75em 1.5em;
+        background: rgb(var(--accent));
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background 0.2s ease;
+      }
+      .home-link:hover {
+        background: rgb(var(--accent-dark));
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="error-container">
+        <h1 class="error-code">404</h1>
+        <p class="error-message">Page not found</p>
+        <p class="error-hint">
+          The page you are looking for does not exist or has been moved.
+        </p>
+        <a href="/" class="home-link">← Back to home</a>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

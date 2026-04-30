@@ -14,7 +14,8 @@
     "generate-types": "wrangler types",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "wrangler d1 execute clients --local --file=./src/db/seed.sql"
   },
   "dependencies": {
     "@astrojs/cloudflare": "13.2.1",

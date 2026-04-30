@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@/db';
-import { clients } from '@/db/schema';
+import { Clients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const GET: APIRoute = async () => {
   const db = createDb(env.clients);
-  const allClients = await db.select().from(clients).all();
+  const allClients = await db.select().from(Clients).all();
 
   return Response.json(allClients);
 };
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const result = await db
-    .insert(clients)
+    .insert(Clients)
     .values({
       name: body.name,
       age: body.age,
@@ -58,9 +58,9 @@ export const PATCH: APIRoute = async ({ request }) => {
   }
 
   const updated = await db
-    .update(clients)
+    .update(Clients)
     .set(updateData)
-    .where(eq(clients.id, Number(id)))
+    .where(eq(Clients.id, Number(id)))
     .returning();
 
   if (updated.length === 0) {
@@ -81,8 +81,8 @@ export const DELETE: APIRoute = async ({ request }) => {
   }
 
   const deleted = await db
-    .delete(clients)
-    .where(eq(clients.id, Number(id)))
+    .delete(Clients)
+    .where(eq(Clients.id, Number(id)))
     .returning();
 
   if (deleted.length === 0) {

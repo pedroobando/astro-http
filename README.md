@@ -37,7 +37,7 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 
    ```bash
    pnpm db:generate
-   npx wrangler d1 execute clients --local --file=./src/db/migrations/0000_xxx.sql
+   npx wrangler d1 execute clients --local --file=./drizzle/0000_xxx.sql
    ```
 
 5. **Levantá el servidor de desarrollo:**
@@ -69,10 +69,11 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 │   ├── components/             # Componentes Astro reutilizables
 │   ├── content/
 │   │   └── blog/               # Posts en Markdown / MDX
-│   ├── db/                     # Drizzle ORM schema y migraciones
+│   ├── db/                     # Drizzle ORM schema y seed
 │   │   ├── index.ts            # Cliente de Drizzle para D1
 │   │   ├── schema.ts           # Definición de tablas tipadas
-│   │   └── migrations/         # Archivos SQL de migraciones
+│   │   └── seed.sql            # Datos de prueba para desarrollo local
+├── drizzle/                    # Archivos SQL de migraciones
 │   ├── layouts/                # Layouts de página
 │   ├── pages/
 │   │   ├── api/                # Endpoints de API
@@ -109,6 +110,7 @@ Este proyecto parte del template oficial `blog` y se adapta para ejecutarse en m
 | `pnpm db:generate` | Genera migraciones SQL con Drizzle Kit                |
 | `pnpm db:migrate`  | Aplica migraciones pendientes                         |
 | `pnpm db:studio`   | Abre Drizzle Studio para explorar la base de datos    |
+| `pnpm db:seed`     | Inserta datos de prueba en la base de datos local     |
 
 ## 🔌 Endpoints de API
 
@@ -156,12 +158,18 @@ La base de datos está configurada en `wrangler.jsonc`:
 El schema se define en `src/db/schema.ts`:
 
 ```ts
-export const clients = sqliteTable('clients', {
+export const Clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   age: integer('age').notNull(),
   isActive: integer('is_active', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export const Posts = sqliteTable('posts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  likes: integer('likes').default(0),
 });
 ```
 
@@ -173,7 +181,7 @@ export const clients = sqliteTable('clients', {
 pnpm db:generate
 ```
 
-Esto crea un archivo SQL en `src/db/migrations/`.
+Esto crea un archivo SQL en `./drizzle/`.
 
 ### 2. Aplicar migraciones a D1 local
 
@@ -184,8 +192,10 @@ npx wrangler d1 execute clients --local --file=./src/db/migrations/0000_xxx.sql
 ### 3. Seedear datos de prueba
 
 ```bash
-npx wrangler d1 execute clients --local --command="INSERT INTO clients (name, age, is_active) VALUES ('Kasim', 32, 1)"
+pnpm db:seed
 ```
+
+Esto ejecuta `src/db/seed.sql` en la copia local de D1, limpiando las tablas antes de insertar para evitar duplicados.
 
 ### 4. Para producción
 
@@ -214,7 +224,7 @@ Este proyecto se despliega en **Cloudflare Workers**:
 1. Aplicá migraciones en producción:
 
    ```bash
-   npx wrangler d1 execute clients --remote --file=./src/db/migrations/0000_xxx.sql
+   npx wrangler d1 execute clients --remote --file=./drizzle/0000_xxx.sql
    ```
 
 2. Compilá la app:
