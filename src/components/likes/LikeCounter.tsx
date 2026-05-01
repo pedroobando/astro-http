@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import confetti from 'canvas-confetti';
 
 interface LikeCounterProps {
   slug: string;
@@ -34,9 +35,10 @@ export default function LikeCounter({ slug }: LikeCounterProps) {
     fetchLikes();
   }, [fetchLikes]);
 
-  const handleLike = async () => {
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isSubmitting) return;
 
+    const button = e.currentTarget;
     setIsSubmitting(true);
     setError(null);
 
@@ -55,7 +57,34 @@ export default function LikeCounter({ slug }: LikeCounterProps) {
 
       const data = (await response.json()) as { likes: number };
       setLikes(data.likes ?? 0);
+
+      console.log('Disparando confetti...');
+
+      // Prueba 1: Desde el centro de la pantalla (debug)
+      confetti({
+        particleCount: 300,
+        spread: 160,
+        origin: { x: 0.5, y: 0.5 },
+        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+        disableForReducedMotion: true,
+        zIndex: 99999,
+      });
+
+      // Prueba 2: Desde el botón (coordenadas relativas)
+      const rect = button.getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { x, y },
+        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+        disableForReducedMotion: true,
+        zIndex: 99999,
+      });
     } catch (err) {
+      console.error('Like update failed:', err);
       setError('Could not update likes');
     } finally {
       setIsSubmitting(false);
@@ -109,7 +138,7 @@ export default function LikeCounter({ slug }: LikeCounterProps) {
     <div style={containerStyle}>
       <button
         style={buttonStyle}
-        onClick={handleLike}
+        onClick={(e) => handleLike(e)}
         disabled={isSubmitting}
         onMouseEnter={(e) => {
           if (!isSubmitting) {

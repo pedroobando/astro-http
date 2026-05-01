@@ -8,11 +8,7 @@ export const GET = (async ({ params }) => {
   const postId = params.id;
 
   const db = createDb(env.clients);
-  const result = await db
-    .select()
-    .from(Posts)
-    .where(eq(Posts.id, postId!))
-    .all();
+  const result = await db.select().from(Posts).where(eq(Posts.id, postId!)).all();
 
   if (result.length === 0) {
     return Response.json({ message: `Post with id ${postId} not found`, like: 0 }, { status: 404 });
@@ -51,11 +47,7 @@ export const PUT = (async ({ params, request }) => {
   const likesToAdd = body.likes;
 
   const db = createDb(env.clients);
-  const existing = await db
-    .select()
-    .from(Posts)
-    .where(eq(Posts.id, postId))
-    .all();
+  const existing = await db.select().from(Posts).where(eq(Posts.id, postId)).all();
 
   if (existing.length === 0) {
     const title = humanizeSlug(postId);
@@ -75,11 +67,7 @@ export const PUT = (async ({ params, request }) => {
   const currentLikes = existing[0].likes ?? 0;
   const newLikes = currentLikes + likesToAdd;
 
-  const updated = await db
-    .update(Posts)
-    .set({ likes: newLikes })
-    .where(eq(Posts.id, postId))
-    .returning();
-
-  return Response.json(updated[0]);
+  await db.update(Posts).set({ likes: newLikes }).where(eq(Posts.id, postId));
+  console.log(existing[0].likes, newLikes);
+  return Response.json({ likes: newLikes });
 }) satisfies APIRoute;
