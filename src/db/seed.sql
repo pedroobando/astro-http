@@ -1,4 +1,5 @@
 -- Seed data for local D1 database
+-- Auto-generated from src/content/blog/
 -- Run with: pnpm db:seed
 
 -- Clean existing data to avoid duplicates
@@ -13,10 +14,10 @@ INSERT INTO clients (name, age, is_active) VALUES
   ('Diana Prince', 30, 1),
   ('Evan Wright', 45, 1);
 
--- Posts (titles from src/content/blog/)
-INSERT INTO posts (title, likes) VALUES
-  ('First post', 12),
-  ('Markdown Style Guide', 34),
-  ('Second post', 8),
-  ('Third post', 21),
-  ('Using MDX', 45);
+-- Posts (titles and slugs from src/content/blog/)
+INSERT INTO posts (id, title, likes) VALUES
+  ('first-post', 'First post', 3),
+  ('markdown-style-guide', 'Markdown Style Guide', 6),
+  ('second-post', 'Second post', 3),
+  ('third-post', 'Third post', 4),
+  ('using-mdx', 'Using MDX', 9);

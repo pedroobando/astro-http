@@ -9,7 +9,7 @@ export const Clients = sqliteTable('clients', {
 });
 
 export const Posts = sqliteTable('posts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey().unique(),
   title: text('title').notNull(),
   likes: integer('likes').default(0),
 });

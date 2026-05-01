@@ -1,6 +1,7 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
+import LikeCounter from '../../components/likes/LikeCounter';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -18,5 +19,6 @@ export const prerender = true;
 ---
 
 <BlogPost {...post.data}>
+  <LikeCounter slug={post.id} client:load />
   <Content />
 </BlogPost>
