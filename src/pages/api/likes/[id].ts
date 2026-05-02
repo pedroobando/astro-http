@@ -1,5 +1,6 @@
 import { createDb } from '@/db';
 import { Posts } from '@/db/schema';
+import { humanizeSlug } from '@/utils/humanizeSlug';
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
@@ -16,15 +17,6 @@ export const GET = (async ({ params }) => {
 
   return Response.json({ like: result[0].likes });
 }) satisfies APIRoute;
-
-function humanizeSlug(slug: string): string {
-  return slug
-    .replace(/[-_]+/g, ' ')
-    .replace(/[^a-zA-Z0-9 ]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 export const PUT = (async ({ params, request }) => {
   const postId = params.id;

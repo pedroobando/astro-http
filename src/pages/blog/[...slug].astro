@@ -1,7 +1,8 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
-import LikeCounter from '../../components/likes/LikeCounter';
+// import LikeCounter from '../../components/likes/LikeCounter';
+import LikeCounterAction from '@/components/likes/LikeCounterAction';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -19,6 +20,7 @@ export const prerender = true;
 ---
 
 <BlogPost {...post.data}>
-  <LikeCounter slug={post.id} client:load />
+  <!-- <LikeCounter slug={post.id} client:load /> -->
+  <LikeCounterAction slug={post.id} client:load />
   <Content />
 </BlogPost>

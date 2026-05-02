@@ -1,31 +1,35 @@
 /**
  * ============================================================
- * LikeCounter.tsx
+ * LikeCounterAction.tsx
  * ============================================================
- * ESTE COMPONENTE USA API ROUTES TRADICIONALES (fetch manual).
+ * ESTE COMPONENTE USA ASTRO ACTIONS (el enfoque moderno).
  *
  * PROPOSITO DIDACTICO:
- * Demostrar el patron clasico de comunicacion cliente-servidor
- * en Astro: crear un endpoint en src/pages/api/... y consumirlo
- * manualmente con fetch(), parsear JSON, manejar status codes,
- * tipar con "as", etc.
+ * Demostrar como Astro Actions eliminan el boilerplate de las
+ * llamadas API. En lugar de fetch + JSON.parse + tipado manual,
+ * importamos un objeto "actions" generado por Astro y llamamos
+ * funciones tipadas directamente.
  *
  * CUANDO USAR ESTE PATRON:
- * - APIs publicas para consumidores externos (webhooks, REST APIs).
- * - Cuando necesitas control total de headers, status codes o
- *   devolver formatos no-JSON (imagenes, PDFs, streams).
- * - Integraciones con servicios de terceros.
+ * - Formularios y operaciones CRUD internas de tu app.
+ * - Cuando queres type-safety automatico entre cliente y servidor.
+ * - Cuando no necesitas control granular de HTTP (headers, status,
+ *   respuestas no-JSON).
+ * - Para progressive enhancement (el mismo handler funciona con
+ *   formularios HTML sin JavaScript).
  *
- * DESVENTAJAS:
- * - Boilerplate considerable (fetch, headers, JSON.parse, tipado manual).
- * - Sin validacion automatica de inputs en el cliente.
- * - Errores de red y de logica se mezclan en el mismo try/catch.
- * - Si cambia la API en el servidor, el cliente no se entera hasta
- *   runtime (cero type-safety entre cliente y servidor).
+ * VENTAJAS:
+ * - Cero boilerplate: no hay fetch, headers, ni JSON.stringify.
+ * - Validacion automatica con Zod en el servidor.
+ * - Type-safety end-to-end: si cambias el schema de la action,
+ *   TypeScript te avisa en el cliente inmediatamente.
+ * - Manejo de errores estandarizado con ActionError.
+ * - Las actions se definen en src/actions/index.ts, no en
+ *   src/pages/api/..., lo que centraliza la logica de negocio.
  *
  * COMPARACION:
- * Mira LikeCounterAction.tsx para ver la version moderna usando
- * Astro Actions, que elimina todo este boilerplate.
+ * Mira LikeCounter.tsx para ver la version tradicional con
+ * fetch manual y API Routes. Ese es el "antes", este es el "despues".
  * ============================================================
  */
 
@@ -37,7 +41,7 @@ interface LikeCounterProps {
   slug: string;
 }
 
-export default function LikeCounter({ slug }: LikeCounterProps) {
+export default function LikeCounterAction({ slug }: LikeCounterProps) {
   const [likes, setLikes] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,19 +49,19 @@ export default function LikeCounter({ slug }: LikeCounterProps) {
 
   const fetchLikes = useCallback(async () => {
     try {
-      // PATRON API ROUTE: Llamada manual con fetch a un endpoint REST.
-      // Tenemos que construir la URL, manejar status codes, parsear JSON
-      // y tipar manualmente con "as" (type assertion).
-      const response = await fetch(`/api/likes/${slug}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          setLikes(0);
-          return;
-        }
-        throw new Error('Failed to fetch likes');
+      // PATRON ACTIONS (GET): Llamamos una funcion tipada directamente.
+      // No hay URL que construir, no hay response.ok que chequear,
+      // no hay JSON.parse ni "as" para tipar. Astro hace todo eso
+      // por detras a traves del modulo virtual "astro:actions".
+      //
+      // Si "getPostLike" cambia su firma (ej: ahora requiere otro parametro),
+      // TypeScript nos dara error de compilacion aqui mismo.
+      const { data, error } = await actions.getPostLike(slug);
+      if (error) {
+        return alert(error);
       }
-      const data = (await response.json()) as { like: number };
-      setLikes(data.like ?? 0);
+
+      setLikes(data?.likes ?? 0);
     } catch (err) {
       setError('Could not load likes');
       setLikes(0);
@@ -77,68 +81,53 @@ export default function LikeCounter({ slug }: LikeCounterProps) {
     setIsSubmitting(true);
     setError(null);
 
-    // NOTA: Esta es una Action de Astro (solo de prueba).
-    // El componente principal aun usa fetch para el like,
-    // pero dejamos esto para mostrar que Actions y fetch pueden coexistir.
-    const { data, error } = await actions.getGreeting({ name: 'Pedro', age: 55 });
-    if (error) {
-      console.log(`Algo salio mal`);
-    }
-    console.log(data);
-
     try {
-      // PATRON API ROUTE (UPDATE): Mismo problema que el GET.
-      // Construimos request manualmente: method, headers, body JSON.stringify.
-      // Si el endpoint cambia su contrato, el cliente no se entera en build time.
-      const response = await fetch(`/api/likes/${slug}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ likes: 1 }),
-      });
-
-      if (!response.ok) {
+      // PATRON ACTIONS (UPDATE): Una sola linea con type-safety.
+      // El input { postId: slug, increment: 1 } es validado
+      // automaticamente por Zod en el servidor (definido en
+      // src/actions/index.ts). Si pasamos un tipo incorrecto,
+      // TypeScript lo detecta antes de ejecutar.
+      //
+      // Comparar con LikeCounter.tsx donde hacemos fetch(),
+      // headers, body: JSON.stringify(), response.ok, etc.
+      const { data, error } = await actions.updLike({ postId: slug, increment: 1 });
+      if (error) {
         throw new Error('Failed to update likes');
       }
 
-      const data = (await response.json()) as { likes: number };
       setLikes(data.likes ?? 0);
-
-      // console.log('Disparando confetti...');
-
-      // Prueba 1: Desde el centro de la pantalla (debug)
-      confetti({
-        particleCount: 300,
-        spread: 160,
-        origin: { x: 0.5, y: 0.5 },
-        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
-        disableForReducedMotion: true,
-        zIndex: 99999,
-      });
-
-      // Prueba 2: Desde el botón (coordenadas relativas)
-      const rect = button.getBoundingClientRect();
-      const x = (rect.left + rect.width / 2) / window.innerWidth;
-      const y = (rect.top + rect.height / 2) / window.innerHeight;
-
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { x, y },
-        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
-        disableForReducedMotion: true,
-        zIndex: 99999,
-      });
+      cofettiFnc(button);
     } catch (err) {
-      // NOTA: En este patron, un error de red (fetch falla) y un error
-      // de logica del servidor (status 500) llegan por el mismo canal.
-      // Con Actions, errores de red y ActionError estan separados.
       console.error('Like update failed:', err);
       setError('Could not update likes');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const cofettiFnc = (button: HTMLButtonElement) => {
+    confetti({
+      particleCount: 300,
+      spread: 160,
+      origin: { x: 0.5, y: 0.5 },
+      colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+      disableForReducedMotion: true,
+      zIndex: 99999,
+    });
+
+    // Explosión desde el botón (coordenadas relativas)
+    const rect = button.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { x, y },
+      colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+      disableForReducedMotion: true,
+      zIndex: 99999,
+    });
   };
 
   const containerStyle: React.CSSProperties = {
